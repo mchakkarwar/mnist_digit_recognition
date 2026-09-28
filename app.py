@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 import tensorflow as tf
 from PIL import Image, ImageOps
+from streamlit_drawable_canvas import st_canvas
 
 
 st.set_page_config(page_title="MNIST Digit Recognition", page_icon="🔢", layout="wide")
@@ -219,10 +220,43 @@ with recognize_tab:
     else:
         model = training_result[0]
         input_type = st.radio(
-            "Image source", ["Upload an image", "MNIST test image"], horizontal=True
+            "Image source",
+            ["Draw a digit", "Upload an image", "MNIST test image"],
+            horizontal=True,
         )
 
-        if input_type == "Upload an image":
+        if input_type == "Draw a digit":
+            canvas = st_canvas(
+                fill_color="rgba(255, 255, 255, 1)",
+                stroke_width=st.slider("Brush size", 8, 24, 16),
+                stroke_color="#FFFFFF",
+                background_color="#000000",
+                height=280,
+                width=280,
+                drawing_mode="freedraw",
+                display_toolbar=True,
+                key="digit_canvas",
+            )
+            if canvas.image_data is not None:
+                drawn_image = Image.fromarray(canvas.image_data.astype("uint8"))
+                prepared_image = prepare_uploaded_image(drawn_image)
+                if prepared_image.any():
+                    preview, result = st.columns([1, 2])
+                    with preview:
+                        st.image(
+                            (prepared_image * 255).astype("uint8"),
+                            caption="28 x 28 model input",
+                            width=180,
+                        )
+                    with result:
+                        probabilities = apply_temperature(
+                            model.predict(prepared_image[np.newaxis, ...], verbose=0)[0],
+                            training_result[8],
+                        )
+                        show_prediction(probabilities)
+                else:
+                    st.info("Draw a digit on the canvas to get a prediction.")
+        elif input_type == "Upload an image":
             uploaded_files = st.file_uploader(
                 "Choose digit images",
                 type=["png", "jpg", "jpeg"],
