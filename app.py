@@ -392,17 +392,39 @@ with evaluation_tab:
         )
 
 with method_tab:
-    st.subheader("Model and preprocessing")
+    st.subheader("End-to-end workflow")
     st.markdown(
         """
-        - MNIST provides 60,000 training images and 10,000 held-out test images.
-        - Pixel intensities are normalized to $[0, 1]$; labels are one-hot encoded.
-        - The network uses two ReLU hidden layers, dropout, and a 10-class softmax.
-        - Stochastic gradient descent minimizes categorical cross-entropy; accuracy
-          is tracked on a validation split and the separate test set.
-                - Temperature scaling fits softmax confidence on the validation split;
-                    expected calibration error is reported on the held-out test set.
-        - Uploaded images are converted to grayscale, inverted when the background
-          is light, cropped to the digit, and centered on a 28 x 28 black canvas.
+        ### 1. Data Preprocessing
+        MNIST supplies 60,000 training images and 10,000 test images. Each 28 x 28
+        grayscale image is converted to `float32` and normalized from pixel values
+        in $[0, 255]$ to $[0, 1]$. Digit labels are converted to 10-class one-hot
+        vectors. Ten percent of the training data is reserved for validation.
+
+        ### 2. Model Development
+        The classifier accepts a 28 x 28 image, flattens it, then applies a 256-unit
+        ReLU layer, dropout, and a 128-unit ReLU layer. A 10-unit softmax output
+        layer produces probabilities for digits 0 through 9.
+
+        ### 3. Training
+        Choose the epoch count, batch size, and learning rate in the Training
+        sidebar, then select **Train model**. The network is trained with
+        categorical cross-entropy and stochastic gradient descent (SGD); accuracy
+        is tracked for both training and validation data.
+
+        ### 4. Evaluation
+        After training, the model is evaluated against the separate 10,000-image
+        test set. The Evaluation tab reports test loss and accuracy, training
+        history, class balance, and a confusion matrix. Temperature scaling is
+        fitted on validation predictions, and expected calibration error is
+        reported for raw and calibrated test probabilities. These held-out results
+        measure how well the model performs on unseen examples.
+
+        ### 5. Prediction
+        In the Recognize tab, draw a digit, upload one or more images, or inspect a
+        test example. Inputs are converted to grayscale, normalized, and centered
+        on a 28 x 28 canvas. The model scores all ten classes; the class with the
+        highest probability is shown with its confidence. Uploaded batches return
+        a prediction and confidence for every image.
         """
     )
